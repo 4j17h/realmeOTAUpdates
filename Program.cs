@@ -6,26 +6,47 @@ namespace realmeOTAUpdates
 {
     class Program
     {
+        public static string[] OTAVer;
+        public static bool CSVWrite;
+
         public static void Main(string[] args)
         {
             try
             {
-                if (args[0] == "--updates")
+                if (args[0] == "--updates" || args[0].ToUpper().Contains("RMX"))
                 {
-                    if (File.Exists("AllDevices_LatestUpdates.csv"))
+                    if (args[0] == "--updates")
                     {
-                        File.Delete("AllDevices_LatestUpdates.csv");
+                        if (File.Exists("AllDevices_LatestUpdates.csv"))
+                        {
+                            File.Delete("AllDevices_LatestUpdates.csv");
+                        }
+                        Console.WriteLine("Checking for updates........");
+                        CSVWrite = true;
+                        FetchUpdates().GetAwaiter().GetResult();
+                        Console.WriteLine("Process Completed.");
                     }
-                    Console.WriteLine("Checking for updates........");
-                    FetchUpdates().GetAwaiter().GetResult();
-                    Console.WriteLine("Process Completed.");
+                    else if (args[0].ToUpper().Contains("RMX"))
+                    {
+                        CSVWrite = false;
+                        OTAVer = args[0].ToUpper().Replace(" ", "").Split("-");
+                        bool CN = false;
+                        if (args[0].ToUpper().Contains("CN")) { CN = true; }
+                        String ProductI = OTAVer[1].Split(".")[1];
+                        String ProductNameL = OTAVer[1].Split("_")[0];
+                        String ProductNameS = OTAVer[0];
+                        PostReqData(ProductNameL, ProductNameS, ProductI, CN).GetAwaiter().GetResult();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Use --updates as arg to check updates for all devices or enter ro.product.name-ro.build.version.ota to get latest update available for specific device\n\nExample:\nrealmeOTAUpdates.exe --updates\nrealmeOTAUpdates.exe RMX1931-RMX1931EX_11.C.33_0330_202001142258");
                 }
             }
             catch (System.IndexOutOfRangeException)
             {
-                Console.WriteLine("Use argument --updates");
+                Console.WriteLine("Error:\nUse --updates as arg to check updates for all devices or enter ro.product.name-ro.build.version.ota to get latest update available for specific device\n\nExample:\nrealmeOTAUpdates.exe --updates\nrealmeOTAUpdates.exe RMX1931-RMX1931EX_11.C.33_0330_202001142258");
             }
-
         }
 
         public static async Task FetchUpdates()
@@ -85,15 +106,22 @@ namespace realmeOTAUpdates
 
         public static async Task PostReqData(string productNameL, string productNameS, string productI, bool CN)
         {
-            string VERSION = productNameL + "_11." + productI + ".00_0000_000000000000";
-            string IMEI = "000000000000000";
-            string ROMVERSION = VERSION.Substring(0, VERSION.Length - 18);
-            string PRODUCTNAME = productNameS;
-            long TIME = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string data = System.Net.WebUtility.UrlDecode("%7B%22version%22%3A+%222%22%2C+%22otaVersion%22%3A+%22" + VERSION + "%22%2C+%22imei%22%3A+%22" + IMEI + "%22%2C+%22mode%22%3A+%220%22%2C+%22language%22%3A+%22en-US%22%2C+%22productName%22%3A+%22" + PRODUCTNAME + "%22%2C+%22type%22%3A+%221%22%2C+%22romVersion%22%3A+%22" + ROMVERSION + "%22%2C+%22colorOSVersion%22%3A+%22null%22%2C+%22androidVersion%22%3A+%22null%22%2C+%22time%22%3A+" + TIME + "%2C+%22registrationId%22%3A+%22UNKNOWN%22%2C+%22operator%22%3A+%22NULL%22%2C+%22trackRegion%22%3A+%22null%22%2C+%22uRegion%22%3A+%22null%22%2C+%22ota_system_root_state%22%3A+%221%22%2C+%22ota_register_trigger_id%22%3A+%22UNKNOWN%22%2C+%22isRooted%22%3A+%221%22%2C+%22canCheckSelf%22%3A+%221%22%2C+%22otaPrefix%22%3A+%22" + ROMVERSION + "%22+%7D");
-            //Console.WriteLine("ROMVersion: "+ROMVERSION+" ProductName: "+PRODUCTNAME+" ProductIdentifier: "+productI +"\n");
-            String EncryptedData = Crypto.Encrypt(data) + "=404H8RDaae6HE8j";
-            await Client.GetResponse(CN, EncryptedData, PRODUCTNAME, ROMVERSION);
+            try
+            {
+                string VERSION = productNameL + "_11." + productI + ".00_0000_000000000000";
+                string IMEI = "000000000000000";
+                string ROMVERSION = VERSION.Substring(0, VERSION.Length - 18);
+                string PRODUCTNAME = productNameS;
+                long TIME = DateTimeOffset.Now.ToUnixTimeSeconds();
+                string data = System.Net.WebUtility.UrlDecode("%7B%22version%22%3A+%222%22%2C+%22otaVersion%22%3A+%22" + VERSION + "%22%2C+%22imei%22%3A+%22" + IMEI + "%22%2C+%22mode%22%3A+%220%22%2C+%22language%22%3A+%22en-US%22%2C+%22productName%22%3A+%22" + PRODUCTNAME + "%22%2C+%22type%22%3A+%221%22%2C+%22romVersion%22%3A+%22" + ROMVERSION + "%22%2C+%22colorOSVersion%22%3A+%22null%22%2C+%22androidVersion%22%3A+%22null%22%2C+%22time%22%3A+" + TIME + "%2C+%22registrationId%22%3A+%22UNKNOWN%22%2C+%22operator%22%3A+%22NULL%22%2C+%22trackRegion%22%3A+%22null%22%2C+%22uRegion%22%3A+%22null%22%2C+%22ota_system_root_state%22%3A+%221%22%2C+%22ota_register_trigger_id%22%3A+%22UNKNOWN%22%2C+%22isRooted%22%3A+%221%22%2C+%22canCheckSelf%22%3A+%221%22%2C+%22otaPrefix%22%3A+%22" + ROMVERSION + "%22+%7D");
+                //Console.WriteLine("ROMVersion: "+ROMVERSION+" ProductName: "+PRODUCTNAME+" ProductIdentifier: "+productI +"\n");
+                String EncryptedData = Crypto.Encrypt(data) + "=404H8RDaae6HE8j";
+                await Client.GetResponse(CN, EncryptedData, PRODUCTNAME, ROMVERSION);
+            }
+            catch (System.NullReferenceException)
+            {
+                Console.WriteLine("Make sure you entered the required argument correctly, should be in the following format ro.product.name-ro.build.version.ota\n\nExample:\nGlobal Variant:  RMX1931-RMX1931EX_11.C.33_0330_202001142258\nChinese Variant: RMX1931-RMX1931_11.C.30_0300_202001142258-CN");
+            }
         }
     }
 }

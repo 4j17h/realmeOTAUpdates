@@ -51,6 +51,7 @@ namespace realmeOTAUpdates
                 string decryptResp = Crypto.Decrypt(response.Content.ReadAsStringAsync().Result.Substring(10).Replace('"', ' ').Replace('}', ' ').Trim());
                 await ParseResponse(decryptResp);
             }
+            else { Console.WriteLine("Empty response received for " + prN); }
         }
 
         public static async Task VerifySign(string PackageName)
@@ -61,7 +62,7 @@ namespace realmeOTAUpdates
             {
                 SignedFileURL = "http://download.c.realme.com/osupdate/" + PackageName;
             }
-            else SignedFileURL = "Not available yet, check again later";
+            else SignedFileURL = "Not available yet. Try again later";
         }
 
         public static async Task ParseResponse(string DecryptedResponse)
@@ -71,7 +72,7 @@ namespace realmeOTAUpdates
             string mPackageName = (string)respD["patch_name"];
             var URLSplit = mPackageName.Split(new char[] { '_' });
             await VerifySign(mPackageName.Substring(0, mPackageName.Length - URLSplit[6].Length - 1) + ".ozip");
-            var recordsN = new List<csv>
+            var ParsedData = new List<csv>
             {
             new csv {
             ModelName = DeviceModelName,
@@ -85,21 +86,30 @@ namespace realmeOTAUpdates
             MD5 = (string)respD["patch_md5"]
                 }
             };
-            using (var stream = File.Open("AllDevices_LatestUpdates.csv", FileMode.Append))
-            using (var writer = new StreamWriter(stream))
-            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            if (Program.CSVWrite)
             {
-                if (!Next)
+                using (var stream = File.Open("AllDevices_LatestUpdates.csv", FileMode.Append))
+                using (var writer = new StreamWriter(stream))
+                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
-                    csv.Configuration.HasHeaderRecord = true;
-                    csv.WriteRecords(recordsN);
-                    Next = true;
+                    if (!Next)
+                    {
+                        csv.Configuration.HasHeaderRecord = true;
+                        csv.WriteRecords(ParsedData);
+                        Next = true;
+                    }
+                    else
+                    {
+                        csv.Configuration.HasHeaderRecord = false;
+                        csv.WriteRecords(ParsedData);
+                    }
                 }
-                else
-                {
-                    csv.Configuration.HasHeaderRecord = false;
-                    csv.WriteRecords(recordsN);
-                }
+            }
+            else
+            {
+                string jsonS = JsonConvert.SerializeObject(ParsedData);
+                string consoleW = jsonS.Substring(2, jsonS.Length - 4).Replace(",", Environment.NewLine + "\n").Replace("\"", "");
+                Console.WriteLine("Latest Available Update:\n\n"+consoleW);
             }
         }
     }
