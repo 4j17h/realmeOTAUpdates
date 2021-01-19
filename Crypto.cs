@@ -1,6 +1,8 @@
 using System;
-using System.Security.Cryptography;
 using System.Text;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace realmeOTAUpdates
 {
@@ -12,36 +14,23 @@ namespace realmeOTAUpdates
             int i = int.Parse(str[0].ToString());
             return keys[i] + str.Substring(4, 8);
         }
-        public static string Decrypt(string resp)
+
+        public static string Decrypt(String resp)
         {
-            byte[] src = Convert.FromBase64String(resp.Substring(0, resp.Length - 15));
-            RijndaelManaged aes = new RijndaelManaged();
+            byte[] data = Convert.FromBase64String(resp.Substring(0, resp.Length - 15));
             byte[] key = Encoding.UTF8.GetBytes(getKey(resp.Split(resp.Substring(0, resp.Length - 15))[1]));
-            aes.KeySize = 128;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.Mode =  CipherMode.ECB;
-            using (ICryptoTransform decrypt = aes.CreateDecryptor(key, null))
-            {
-                byte[] decr = decrypt.TransformFinalBlock(src, 0, src.Length);
-                decrypt.Dispose();
-                return Encoding.UTF8.GetString(decr);
-            }
+            IBufferedCipher Cipher = CipherUtilities.GetCipher("AES/ECB/PKCS5Padding");
+            Cipher.Init(false, new KeyParameter(key));
+            return Encoding.UTF8.GetString(Cipher.DoFinal(data));
         }
 
-        public static string Encrypt(string req)
+        public static string Encrypt(String req)
         {
-            byte[] src = Encoding.UTF8.GetBytes(req);
+            byte[] data = Encoding.UTF8.GetBytes(req);
             byte[] key = Encoding.UTF8.GetBytes("09e32ji68RDaae6H");
-            RijndaelManaged aes = new RijndaelManaged();
-            aes.KeySize = 128;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.Mode = CipherMode.ECB;
-            using (ICryptoTransform encrypt = aes.CreateEncryptor(key, null))
-            {
-                byte[] encr = encrypt.TransformFinalBlock(src, 0, src.Length);
-                encrypt.Dispose();
-                return Convert.ToBase64String(encr);
-            }
+            IBufferedCipher Cipher = CipherUtilities.GetCipher("AES/ECB/PKCS5Padding");
+            Cipher.Init(true, new KeyParameter(key));
+            return Convert.ToBase64String(Cipher.DoFinal(data));
         }
     }
 }

@@ -115,7 +115,7 @@ namespace realmeOTAUpdates
                 long TIME = DateTimeOffset.Now.ToUnixTimeSeconds();
                 string data = System.Net.WebUtility.UrlDecode("%7B%22version%22%3A+%222%22%2C+%22otaVersion%22%3A+%22" + VERSION + "%22%2C+%22imei%22%3A+%22" + IMEI + "%22%2C+%22mode%22%3A+%220%22%2C+%22language%22%3A+%22en-US%22%2C+%22productName%22%3A+%22" + PRODUCTNAME + "%22%2C+%22type%22%3A+%221%22%2C+%22romVersion%22%3A+%22" + ROMVERSION + "%22%2C+%22colorOSVersion%22%3A+%22null%22%2C+%22androidVersion%22%3A+%22null%22%2C+%22time%22%3A+" + TIME + "%2C+%22registrationId%22%3A+%22UNKNOWN%22%2C+%22operator%22%3A+%22NULL%22%2C+%22trackRegion%22%3A+%22null%22%2C+%22uRegion%22%3A+%22null%22%2C+%22ota_system_root_state%22%3A+%221%22%2C+%22ota_register_trigger_id%22%3A+%22UNKNOWN%22%2C+%22isRooted%22%3A+%221%22%2C+%22canCheckSelf%22%3A+%221%22%2C+%22otaPrefix%22%3A+%22" + ROMVERSION + "%22+%7D");
                 //Console.WriteLine("ROMVersion: "+ROMVERSION+" ProductName: "+PRODUCTNAME+" ProductIdentifier: "+productI +"\n");
-                String EncryptedData = Crypto.Encrypt(data) + "=404H8RDaae6HE8j";
+                String EncryptedData = Crypto.Encrypt(data) + "404H8RDaae6HE8j";
                 await Client.GetResponse(CN, EncryptedData, PRODUCTNAME, ROMVERSION);
             }
             catch (System.NullReferenceException)
